@@ -23,21 +23,30 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.net.URL;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeSet;
+
+import org.osgi.framework.BundleContext;
 
 import io.fabric8.common.util.ChecksumUtils;
 import io.fabric8.common.util.Closeables;
-
-import org.osgi.framework.BundleContext;
 
 public class DataStoreUtils {
 
     public static byte[] toBytes(Properties source) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
-            source.store(baos, null);
+            Properties copy = new Properties() {
+                @Override
+                public synchronized Enumeration<Object> keys() {
+                    return Collections.enumeration(new TreeSet<>(super.keySet()));
+                }
+            };
+            copy.putAll(source);
+            copy.store(baos, null);
         } catch (IOException ex) {
             throw new IllegalArgumentException("Cannot store properties", ex);
         }
